@@ -1,35 +1,35 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 
 #[ink::contract]
-mod WineryManagement {
+mod winery_management {
     use ink::prelude::string::String;
     use ink::storage::Mapping;
 
     #[ink::scale_derive(Encode, Decode, TypeInfo)]
     #[cfg_attr(feature = "std", derive(ink::storage::traits::StorageLayout))]
     pub struct Winery {
-        wineryID: u128,
-        wineryName: String,
-        wineryAddress: AccountId,
+        winery_id: u128,
+        winery_name: String,
+        winery_address: AccountId,
         latitude: i128,
         longitude: i128,
     }
 
     #[ink(event)]
     pub struct WineryCreated {
-        ID: u128,
-        wineryName: String,
-        wineryAddress: AccountId,
+        winery_id: u128,
+        winery_name: String,
+        winery_address: AccountId,
         latitude: i128,
         longitude: i128,
-        // wineryNumber: u128,
+        winery_number: u128,
     }
 
     #[ink(storage)]
     pub struct WineryManagement {
-        currentWineryID: u128,
+        current_winery_id: u128,
         wineries: Mapping<(AccountId, u128), Winery>,
-        userWineryCount: Mapping<AccountId, u128>,
+        user_winery_count: Mapping<AccountId, u128>,
     }
 
     impl WineryManagement {
@@ -37,41 +37,40 @@ mod WineryManagement {
         #[ink(constructor)]
         pub fn default() -> Self {
             Self {
-                currentWineryID: Default::default(),
+                current_winery_id: Default::default(),
                 wineries: Mapping::default(),
-                userWineryCount: Mapping::default(),
+                user_winery_count: Mapping::default(),
             }
         }
 
         #[ink(message)]
         pub fn create_winery(&mut self, _name: String, _latitude: i128, _longitude: i128){
-            // let winery_number: u128 = self.userWineryCount.insert(self.env().caller(), &1).expect("Couldnt add the number");
-
-            self.currentWineryID = self.currentWineryID.checked_add(1).unwrap();
+            let mut winery_number = self.user_winery_count.get(self.env().caller()).unwrap_or(0);
+            winery_number = winery_number.checked_add(1).unwrap();
 
             let new_winery = Winery {
-                wineryID: self.currentWineryID,
-                wineryName: _name,
-                wineryAddress: self.env().caller(),
+                winery_id: self.current_winery_id,
+                winery_name: _name,
+                winery_address: self.env().caller(),
                 latitude: _latitude,
                 longitude: _longitude,
             };
 
-            self.wineries.insert((self.env().caller(), self.currentWineryID), &new_winery);
+            self.wineries.insert((self.env().caller(), &winery_number), &new_winery);
             self.env().emit_event(WineryCreated {
-                ID: self.currentWineryID,
-                wineryName: new_winery.wineryName,
-                wineryAddress: self.env().caller(),
+                winery_id: self.current_winery_id,
+                winery_name: new_winery.winery_name,
+                winery_address: self.env().caller(),
                 latitude: new_winery.latitude,
                 longitude: new_winery.longitude,
-                // wineryNumber: winery_number,
+                winery_number,
             });
+            self.current_winery_id = self.current_winery_id.checked_add(1).unwrap();
         }
         
         #[ink(message)]
         pub fn get_winery(&self, user_addy: AccountId, winery_number: u128) -> Option<Winery> {
-            let winery = self.wineries.get((user_addy, winery_number));
-            winery
+            self.wineries.get((user_addy, winery_number))
         }
     }
 
