@@ -13,7 +13,7 @@ mod WineryManagement {
         wineryAddress: AccountId,
         latitude: i128,
         longitude: i128,
-}
+    }
 
     #[ink(event)]
     pub struct WineryCreated {
@@ -22,11 +22,10 @@ mod WineryManagement {
         wineryAddress: AccountId,
         latitude: i128,
         longitude: i128,
-        wineryNumber: u128,
-}
+        // wineryNumber: u128,
+    }
 
     #[ink(storage)]
-    #[derive(Default)]
     pub struct WineryManagement {
         currentWineryID: u128,
         wineries: Mapping<(AccountId, u128), Winery>,
@@ -46,9 +45,9 @@ mod WineryManagement {
 
         #[ink(message)]
         pub fn create_winery(&mut self, _name: String, _latitude: i128, _longitude: i128){
-            let winery_number: u128 = self.userWineryCount.insert(self.env().caller(), &1);
+            // let winery_number: u128 = self.userWineryCount.insert(self.env().caller(), &1).expect("Couldnt add the number");
 
-            self.currentWineryID += 1;
+            self.currentWineryID = self.currentWineryID.checked_add(1).unwrap();
 
             let new_winery = Winery {
                 wineryID: self.currentWineryID,
@@ -58,19 +57,22 @@ mod WineryManagement {
                 longitude: _longitude,
             };
 
-            self.wineries.insert((self.env().caller(), &winery_number), &new_winery);
+            self.wineries.insert((self.env().caller(), self.currentWineryID), &new_winery);
             self.env().emit_event(WineryCreated {
                 ID: self.currentWineryID,
-                wineryName: self.wineryName,
+                wineryName: new_winery.wineryName,
                 wineryAddress: self.env().caller(),
-                latitude: self.latitude,
-                longitude: self.longitude,
-                wineryNumber: winery_number,
+                latitude: new_winery.latitude,
+                longitude: new_winery.longitude,
+                // wineryNumber: winery_number,
             });
-        
         }
-
-
+        
+        #[ink(message)]
+        pub fn get_winery(&self, user_addy: AccountId, winery_number: u128) -> Option<Winery> {
+            let winery = self.wineries.get((user_addy, winery_number));
+            winery
+        }
     }
 
     #[cfg(test)]
