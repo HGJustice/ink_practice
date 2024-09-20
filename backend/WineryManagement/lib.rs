@@ -37,7 +37,7 @@ mod winery_management {
         #[ink(constructor)]
         pub fn default() -> Self {
             Self {
-                current_winery_id: Default::default(),
+                current_winery_id: 1,
                 wineries: Mapping::default(),
                 user_winery_count: Mapping::default(),
             }
@@ -47,7 +47,8 @@ mod winery_management {
         pub fn create_winery(&mut self, _name: String, _latitude: i128, _longitude: i128){
             let mut winery_number = self.user_winery_count.get(self.env().caller()).unwrap_or(0);
             winery_number = winery_number.checked_add(1).unwrap();
-
+            self.user_winery_count.insert(self.env().caller(), &winery_number);
+            
             let new_winery = Winery {
                 winery_id: self.current_winery_id,
                 winery_name: _name,
@@ -65,6 +66,7 @@ mod winery_management {
                 longitude: new_winery.longitude,
                 winery_number,
             });
+          
             self.current_winery_id = self.current_winery_id.checked_add(1).unwrap();
         }
         
@@ -76,7 +78,24 @@ mod winery_management {
 
     #[cfg(test)]
     mod tests {
-  
+
+        use super::*;
+
+        #[ink::test]
+        fn check_default_contract(){
+            let winery_management = WineryManagement::default();
+            assert_eq!(winery_management.current_winery_id, 1);
+
+         
+            let random_account = AccountId::from([0x1; 32]);
+            assert_eq!(winery_management.user_winery_count.get(random_account).unwrap_or(0), 0);
+
+            assert_eq!(winery_management.get_winery(random_account, 1), None);
+
+        }
+
+
+
     }
 
 

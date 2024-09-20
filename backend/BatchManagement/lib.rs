@@ -5,6 +5,7 @@ mod batch_management {
     use ink::prelude::string::String;
     use ink::storage::Mapping;
 
+
     #[ink::scale_derive(Encode, Decode, TypeInfo)]
     #[cfg_attr(feature = "std", derive(ink::storage::traits::StorageLayout))]
     pub struct Batch {
