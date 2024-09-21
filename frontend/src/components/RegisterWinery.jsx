@@ -1,43 +1,30 @@
 import React, { useState } from "react";
-import { useInkathon, useRegisteredContract } from "@scio-labs/use-inkathon";
+import {
+  useInkathon,
+  useRegisteredContract,
+  contractTx,
+} from "@scio-labs/use-inkathon";
 
 export default function RegisterWinery() {
   const { api, activeAccount } = useInkathon();
-  const { contract, address } = useRegisteredContract("winery_management");
-
-  const [formData, setFormData] = useState({
-    wineryName: "",
-  });
+  const { contract } = useRegisteredContract("winery_management");
+  const [formData, setFormData] = useState({ wineryName: "" });
 
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const hardcodedAltitude = 500;
+    const hardcodedLatitude = 500;
     const hardcodedLongitude = 455;
 
-    const estimatedGas = await contract.query.createWinery(
-      activeAccount.address,
-      { value: 0 },
+    await contractTx(api, activeAccount.address, contract, "createWinery", {}, [
       formData.wineryName,
-      hardcodedAltitude,
-      hardcodedLongitude
-    );
-
-    contract.tx
-      .createWinery(
-        { estimatedGas, value: 0 },
-        formData.wineryName,
-        hardcodedAltitude,
-        hardcodedLongitude
-      )
-      .signAndSend(activeAccount.address);
+      hardcodedLatitude,
+      hardcodedLongitude,
+    ]);
   };
 
   return (
